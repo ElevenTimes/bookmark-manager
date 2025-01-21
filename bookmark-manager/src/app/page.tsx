@@ -6,6 +6,7 @@ export default function Home() {
         <p className="text-lg text-center">
           Start building your project here.
         </p>
+        <div className="bookmark-holder"></div>
       </main>
     </div>
   );
