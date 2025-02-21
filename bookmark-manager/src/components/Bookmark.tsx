@@ -1,23 +1,44 @@
-import React from 'react'
+"use client";
+
+import { useState } from "react";
 
 type BookmarkProps = {
+  id: string;
   link: string;
-  keywords?: string[];
-  description?: string;
-  folderID: number;
+  description: string;
+  onDelete: (id: string) => void;
 };
 
-const Bookmark = ({ link, keywords, description, folderID }: BookmarkProps) => {
+const Bookmark = ({ id, link, description, onDelete }: BookmarkProps) => {
+  const [showMenu, setShowMenu] = useState(false);
+
+  function handleRightClick(e: React.MouseEvent) {
+    e.preventDefault(); // Prevent default right-click behavior
+    setShowMenu(!showMenu);
+  }
+
   return (
-    <button
-      type="button"
-      className="p-3 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+    <div
+      className="relative p-2 border rounded-md bg-white shadow-md"
+      onContextMenu={handleRightClick} // Right-click opens menu
     >
-      <a href={link} target="_blank" rel="noopener noreferrer">
+      <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
         {description || "Open Bookmark"}
       </a>
-    </button>
+
+      {/* Context Menu */}
+      {showMenu && (
+        <div className="z-40 absolute top-8 left-0 bg-gray-200 shadow-md rounded-md p-2">
+          <button
+            onClick={() => onDelete(id)}
+            className="text-red-500 hover:text-red-700"
+          >
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
   );
 };
 
-export default Bookmark
+export default Bookmark;
