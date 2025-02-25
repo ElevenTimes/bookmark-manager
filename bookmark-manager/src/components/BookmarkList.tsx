@@ -31,7 +31,6 @@ const BookmarkList = () => {
 
   return (
     <div className="p-4 max-w-md mx-auto">
-      <h2 className="text-xl font-bold mb-4">Add Bookmark</h2>
 
       {/* Form for Bookmark Input */}
       <form onSubmit={handleAddBookmark} className="flex flex-col gap-2 mb-4">
