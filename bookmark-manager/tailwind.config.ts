@@ -18,6 +18,7 @@ export default {
         'secondary-foreground': 'var(--secondary-foreground)',
         accent: 'var(--accent)',
         'accent-foreground': 'var(--accent-foreground)',
+        input: 'var(--input-field)',
         border: 'var(--border)',
       },
     },
