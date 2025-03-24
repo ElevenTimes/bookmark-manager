@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 export default function MainLayout() {
   const [navWidth, setNavWidth] = useState(20); // in percentage, default 20%
   const isResizing = useRef(false);
-  const [bookmarks, setBookmarks] = useState<{ id: string; link: string; description: string }[]>([]);
+  const [bookmarks, setBookmarks] = useState<{ id: string; link: string; description: string; date: string }[]>([]);
   
 
   // Mouse event handlers for resizing
@@ -33,6 +33,7 @@ export default function MainLayout() {
       id: uuidv4(),
       link,
       description: description || "No description",
+      date: "None",
     };
     setBookmarks((prev) => [...prev, newBookmark]);
   };
@@ -55,7 +56,13 @@ export default function MainLayout() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <ActionPanel onAddBookmark={handleAddBookmark} />
+        <div className="pb-10">
+        <ActionPanel 
+          onAddBookmark={handleAddBookmark} 
+          bookmarks={bookmarks} 
+          setBookmarks={setBookmarks}
+        />
+        </div>
         <BookmarkList bookmarks={bookmarks} onDeleteBookmark={handleDeleteBookmark} />
       </div>
     </div>

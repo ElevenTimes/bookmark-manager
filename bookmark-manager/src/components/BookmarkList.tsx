@@ -3,7 +3,7 @@
 import Bookmark from "./Bookmark";
 
 type BookmarkListProps = {
-  bookmarks: { id: string; link: string; description: string }[];
+  bookmarks: { id: string; link: string; description: string; date: string }[];
   onDeleteBookmark: (id: string) => void;
 };
 
