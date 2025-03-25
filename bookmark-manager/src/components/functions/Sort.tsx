@@ -1,6 +1,6 @@
 "use client";
 
-import { BookmarkType } from "../Bookmark"; // Adjust path if needed
+import { BookmarkType } from "../Bookmark";
 
 export function sort(bookmarks: BookmarkType[], criteria: "name" | "date", order: "asc" | "desc") {
   return [...bookmarks].sort((a, b) => {

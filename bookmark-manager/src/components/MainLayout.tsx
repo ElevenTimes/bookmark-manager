@@ -4,12 +4,14 @@ import { useState, useRef } from "react";
 import Navigation from "./Navigation";
 import BookmarkList from "./BookmarkList";
 import ActionPanel from "./ActionPanel";
+import { search } from "./functions/Search";
 import { v4 as uuidv4 } from "uuid";
 
 export default function MainLayout() {
   const [navWidth, setNavWidth] = useState(20); // in percentage, default 20%
   const isResizing = useRef(false);
   const [bookmarks, setBookmarks] = useState<{ id: string; link: string; description: string; date: string }[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   
 
   // Mouse event handlers for resizing
@@ -33,7 +35,7 @@ export default function MainLayout() {
       id: uuidv4(),
       link,
       description: description || "No description",
-      date: "None",
+      date: new Date().toISOString(), // Current date and time
     };
     setBookmarks((prev) => [...prev, newBookmark]);
   };
@@ -42,6 +44,8 @@ export default function MainLayout() {
   const handleDeleteBookmark = (id: string) => {
     setBookmarks((prev) => prev.filter((b) => b.id !== id));
   };
+
+  const filteredBookmarks = search(bookmarks, searchQuery);
 
   return (
     
@@ -61,9 +65,11 @@ export default function MainLayout() {
           onAddBookmark={handleAddBookmark} 
           bookmarks={bookmarks} 
           setBookmarks={setBookmarks}
+          setSearchQuery={setSearchQuery}
+
         />
         </div>
-        <BookmarkList bookmarks={bookmarks} onDeleteBookmark={handleDeleteBookmark} />
+        <BookmarkList bookmarks={filteredBookmarks} onDeleteBookmark={handleDeleteBookmark} />
       </div>
     </div>
   );
