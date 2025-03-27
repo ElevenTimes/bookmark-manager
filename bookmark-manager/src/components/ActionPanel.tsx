@@ -4,15 +4,18 @@ import React, { useState, useEffect, useRef } from "react";
 import { BookmarkType } from "./Bookmark"; // Adjust path if needed
 import { sort } from "./functions/Sort";
 import { KeywordType, createKeyword } from "./Keyword";
+import ClickOutside from "./hooks/ClickOutside";
 
 type ActionPanelProps = {
-  onAddBookmark: (link: string, description: string) => void;
+  onAddBookmark: (link: string, description: string, keywords: KeywordType[]) => void;
   bookmarks: BookmarkType[];
   setBookmarks: React.Dispatch<React.SetStateAction<BookmarkType[]>>;
   setSearchQuery: (query: string) => void; 
+  keywords: KeywordType[]; // Receive keywords here
+  setKeywords: React.Dispatch<React.SetStateAction<KeywordType[]>>; // Receive setKeywords function here
 };
 
-export default function ActionPanel({ onAddBookmark, bookmarks, setBookmarks, setSearchQuery}: ActionPanelProps) {
+export default function ActionPanel({ onAddBookmark, bookmarks, setBookmarks, setSearchQuery, keywords, setKeywords }: ActionPanelProps) {
   const [isSorting, setIsSorting] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [isAddingKeyword, setIsAddingKeyword] = useState(false);
@@ -20,9 +23,8 @@ export default function ActionPanel({ onAddBookmark, bookmarks, setBookmarks, se
   const [link, setLink] = useState("");
   const [description, setDescription] = useState("");
 
-  const [keywords, setKeywords] = useState<KeywordType[]>([]);
   const [newKeyword, setNewKeyword] = useState("");
-  
+  const [selectedKeywords, setSelectedKeywords] = useState<KeywordType[]>([]);
 
   // Refs for detecting clicks outside
   const sortRef = useRef<HTMLDivElement>(null);
@@ -42,40 +44,24 @@ export default function ActionPanel({ onAddBookmark, bookmarks, setBookmarks, se
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!link.trim()) return;
-    onAddBookmark(link, description);
+    onAddBookmark(link, description, selectedKeywords); // Include selected keywords
     setLink("");
     setDescription("");
-    setIsAdding(false); // Close form after submission
+    setSelectedKeywords([]); // Clear after submission
+    setIsAdding(false);
   };
 
   // Handle adding a keyword
-  const handleAddKeyword = () => {
+  const handleCreateKeyword = () => {
     if (!newKeyword.trim()) return; // Prevent adding empty keywords
     const keyword = createKeyword(newKeyword);
     setKeywords((prev) => [...prev, keyword]);
     setNewKeyword(""); // Clear input field
   };
 
-  // Detect clicks outside of dropdowns
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        sortRef.current && !sortRef.current.contains(event.target as Node) &&
-        addRef.current && !addRef.current.contains(event.target as Node) &&
-        addKeywordRef.current && !addKeywordRef.current.contains(event.target as Node)
-
-      ) {
-        setIsSorting(false);
-        setIsAdding(false);
-        setIsAddingKeyword(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  ClickOutside(sortRef, () => setIsSorting(false));
+  ClickOutside(addRef, () => setIsAdding(false));
+  ClickOutside(addKeywordRef, () => setIsAddingKeyword(false));
 
   return (
     <div className="h-32 p-4 border-b-2 border-[var(--border)] flex justify-between items-start relative">
@@ -126,7 +112,7 @@ export default function ActionPanel({ onAddBookmark, bookmarks, setBookmarks, se
                 <form 
                   onSubmit={(e) => {
                     e.preventDefault();
-                    handleAddKeyword();
+                    handleCreateKeyword();
                   }} 
                   className="flex flex-col gap-2"
                 >
@@ -176,8 +162,6 @@ export default function ActionPanel({ onAddBookmark, bookmarks, setBookmarks, se
             )}
           </div>
 
-
-
           {/* Add Bookmark Button */}
           <div ref={addRef} className="relative w-40">
             <button
@@ -221,6 +205,32 @@ export default function ActionPanel({ onAddBookmark, bookmarks, setBookmarks, se
                     </button>
                   </div>
                 </form>
+
+                <div className="flex flex-wrap gap-2 mt-8 max-w-full">
+                  {keywords.length > 0 ? (
+                    keywords.map((keyword) => (
+                      <button 
+                        key={keyword.id} 
+                        onClick={() => {
+                          setSelectedKeywords((prev) =>
+                            prev.some((kw) => kw.id === keyword.id)
+                              ? prev.filter((kw) => kw.id !== keyword.id) // Remove if already selected
+                              : [...prev, keyword] // Add if not selected
+                          );
+                        }}
+                        className={`bg-[var(--background)] text-[var(--primary-foreground)] text-sm px-2 py-1 rounded max-w-32 break-words text-center ${
+                          selectedKeywords.some((kw) => kw.id === keyword.id) ? "bg-[var(--primary)]" : ""
+                        }`}
+                        style={{ outline: `2px solid var(--primary)` }}
+                      >
+                        {keyword.keyword}
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-gray-400 text-sm">No keywords yet</p>
+                  )}
+                </div>
+
               </div>
             )}
           </div>

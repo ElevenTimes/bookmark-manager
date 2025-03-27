@@ -4,15 +4,17 @@ import { useState, useRef } from "react";
 import Navigation from "./Navigation";
 import BookmarkList from "./BookmarkList";
 import ActionPanel from "./ActionPanel";
+import { KeywordType, createKeyword} from "./Keyword";
 import { search } from "./functions/Search";
 import { v4 as uuidv4 } from "uuid";
 
 export default function MainLayout() {
   const [navWidth, setNavWidth] = useState(20); // in percentage, default 20%
   const isResizing = useRef(false);
-  const [bookmarks, setBookmarks] = useState<{ id: string; link: string; description: string; date: string }[]>([]);
+  const [bookmarks, setBookmarks] = useState<{ id: string; link: string; description: string; date: string; keywords: KeywordType[] }[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   
+  const [keywords, setKeywords] = useState<KeywordType[]>([]);
 
   // Mouse event handlers for resizing
   const handleMouseDown = () => (isResizing.current = true);
@@ -30,12 +32,13 @@ export default function MainLayout() {
   }
 
   // Handle adding bookmarks
-  const handleAddBookmark = (link: string, description: string) => {
+  const handleAddBookmark = (link: string, description: string, keywords: KeywordType[]) => {
     const newBookmark = {
       id: uuidv4(),
       link,
       description: description || "No description",
-      date: new Date().toISOString(), // Current date and time
+      date: new Date().toISOString(),
+      keywords: keywords, // ✅ Store the selected keywords here
     };
     setBookmarks((prev) => [...prev, newBookmark]);
   };
@@ -43,6 +46,26 @@ export default function MainLayout() {
   // Handle deleting bookmarks
   const handleDeleteBookmark = (id: string) => {
     setBookmarks((prev) => prev.filter((b) => b.id !== id));
+  };
+
+  const handleAddKeyword = (bookmarkId: string, keywordText: string) => {
+    setBookmarks((prev) =>
+      prev.map((bookmark) =>
+        bookmark.id === bookmarkId
+          ? {
+              ...bookmark,
+              keywords: bookmark.keywords.some((kw) => kw.keyword === keywordText)
+                ? bookmark.keywords.filter((kw) => kw.keyword !== keywordText) // Toggle off
+                : [...bookmark.keywords, createKeyword(keywordText)], // Toggle on
+            }
+          : bookmark
+      )
+    );
+  
+    // Optional: Ensure global keyword list is updated
+    if (!keywords.some((kw) => kw.keyword === keywordText)) {
+      setKeywords((prev) => [...prev, createKeyword(keywordText)]);
+    }
   };
 
   const filteredBookmarks = search(bookmarks, searchQuery);
@@ -66,10 +89,16 @@ export default function MainLayout() {
           bookmarks={bookmarks} 
           setBookmarks={setBookmarks}
           setSearchQuery={setSearchQuery}
-
+          keywords={keywords} // Pass keywords list here
+          setKeywords={setKeywords} // Pass setKeywords function here
         />
+
         </div>
-        <BookmarkList bookmarks={filteredBookmarks} onDeleteBookmark={handleDeleteBookmark} />
+        <BookmarkList 
+          bookmarks={filteredBookmarks} 
+          onDeleteBookmark={handleDeleteBookmark} 
+          onAddKeyword={handleAddKeyword} // <-- Ensure this is passed
+        />
       </div>
     </div>
   );
