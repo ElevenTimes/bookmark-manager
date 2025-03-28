@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Registration from "./profile/Registration";
 import Navigation from "./Navigation";
 import BookmarkList from "./BookmarkList";
 import ActionPanel from "./ActionPanel";
@@ -21,7 +22,8 @@ export default function MainLayout() {
   const handleMouseMove = (e: MouseEvent) => {
     if (!isResizing.current) return;
     const newWidth = (e.clientX / window.innerWidth) * 100;
-    if (newWidth > 10 && newWidth < 50) setNavWidth(newWidth);
+    if (newWidth < 50) setNavWidth(newWidth);
+    if (newWidth < 2) setNavWidth(0);
   };
   const handleMouseUp = () => (isResizing.current = false);
 
@@ -74,25 +76,29 @@ export default function MainLayout() {
     
     <div className={`flex h-screen ${isResizing ? 'select-none' : ''}`}>
       {/* Navigation Sidebar */}
-      <div className="bg-[var(--secondary-background)] text-[var(--foreground)] p-4" style={{ width: `${navWidth}%` }}>
+      <div 
+        className="bg-[var(--secondary-background)] text-[var(--foreground)] flex flex-col h-full relative z-0 overflow-hidden" 
+        style={{ width: `${navWidth}%` }}
+      >
+        <Registration />
         <Navigation />
       </div>
 
+
       {/* Divider */}
-      <div onMouseDown={handleMouseDown} className="w-1 cursor-col-resize bg-[var(--primary)]" />
+      <div onMouseDown={handleMouseDown} className="w-1 cursor-col-resize bg-[var(--border)] relative z-11" />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col relative z-10">
         <div className="pb-10">
-        <ActionPanel 
-          onAddBookmark={handleAddBookmark} 
-          bookmarks={bookmarks} 
-          setBookmarks={setBookmarks}
-          setSearchQuery={setSearchQuery}
-          keywords={keywords} // Pass keywords list here
-          setKeywords={setKeywords} // Pass setKeywords function here
-        />
-
+          <ActionPanel 
+            onAddBookmark={handleAddBookmark} 
+            bookmarks={bookmarks} 
+            setBookmarks={setBookmarks}
+            setSearchQuery={setSearchQuery}
+            keywords={keywords} // Pass keywords list here
+            setKeywords={setKeywords} // Pass setKeywords function here
+          />
         </div>
         <BookmarkList 
           bookmarks={filteredBookmarks} 
