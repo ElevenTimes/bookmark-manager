@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { KeywordType } from "./Keyword";
+import { FolderType } from "./Folder";
 
 
 export type BookmarkType = {
@@ -10,6 +11,7 @@ export type BookmarkType = {
   description: string;
   date: string;
   keywords: KeywordType[];
+  folderIds: string[];
 };
 
 type BookmarkProps = BookmarkType & {
@@ -17,19 +19,13 @@ type BookmarkProps = BookmarkType & {
   onAddKeyword: (id: string, keyword: string) => void;
 };
 
-const Bookmark = ({ id, link, description, keywords, onDelete, onAddKeyword }: BookmarkProps) => {
+const Bookmark = ({ id, link, description, keywords, folderIds, onDelete, onAddKeyword }: BookmarkProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [newKeyword, setNewKeyword] = useState("");
 
   function handleRightClick(e: React.MouseEvent) {
     e.preventDefault();
     setShowMenu(!showMenu);
-  }
-
-  function handleAddKeyword() {
-    if (!newKeyword.trim()) return;
-    onAddKeyword(id, newKeyword.trim()); // Call parent function to update state
-    setNewKeyword(""); // Clear input field
   }
 
   return (

@@ -6,16 +6,19 @@ import Navigation from "./Navigation";
 import BookmarkList from "./BookmarkList";
 import ActionPanel from "./ActionPanel";
 import { KeywordType, createKeyword} from "./Keyword";
+import Folder from "./Folder";
 import { search } from "./functions/Search";
 import { v4 as uuidv4 } from "uuid";
 
 export default function MainLayout() {
   const [navWidth, setNavWidth] = useState(20); // in percentage, default 20%
   const isResizing = useRef(false);
-  const [bookmarks, setBookmarks] = useState<{ id: string; link: string; description: string; date: string; keywords: KeywordType[] }[]>([]);
+  const [bookmarks, setBookmarks] = useState<{ id: string; link: string; description: string; date: string; keywords: KeywordType[], folderIds: string[] }[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   
   const [keywords, setKeywords] = useState<KeywordType[]>([]);
+
+  const [currentFolderId, setCurrentFolderId] = useState("all");
 
   // Mouse event handlers for resizing
   const handleMouseDown = () => (isResizing.current = true);
@@ -23,7 +26,7 @@ export default function MainLayout() {
     if (!isResizing.current) return;
     const newWidth = (e.clientX / window.innerWidth) * 100;
     if (newWidth < 50) setNavWidth(newWidth);
-    if (newWidth < 2) setNavWidth(0);
+    if (newWidth < 5) setNavWidth(0);
   };
   const handleMouseUp = () => (isResizing.current = false);
 
@@ -41,6 +44,7 @@ export default function MainLayout() {
       description: description || "No description",
       date: new Date().toISOString(),
       keywords: keywords, // ✅ Store the selected keywords here
+      folderIds: ["All"],
     };
     setBookmarks((prev) => [...prev, newBookmark]);
   };
@@ -69,8 +73,13 @@ export default function MainLayout() {
       setKeywords((prev) => [...prev, createKeyword(keywordText)]);
     }
   };
-
-  const filteredBookmarks = search(bookmarks, searchQuery);
+  
+  // Filter bookmarks based on current folder + search query
+  const filteredBookmarks = search(
+    bookmarks.filter((b) => b.folderIds.includes(currentFolderId)), // <-- Added filtering
+    searchQuery
+  );
+  
 
   return (
     
@@ -81,7 +90,7 @@ export default function MainLayout() {
         style={{ width: `${navWidth}%` }}
       >
         <Registration />
-        <Navigation />
+        <Navigation chooseFolder={setCurrentFolderId} />
       </div>
 
 

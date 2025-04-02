@@ -4,7 +4,7 @@ import Bookmark from "./Bookmark";
 import { KeywordType } from "./Keyword"
 
 type BookmarkListProps = {
-  bookmarks: { id: string; link: string; description: string; date: string; keywords: KeywordType[] }[];
+  bookmarks: { id: string; link: string; description: string; date: string; keywords: KeywordType[]; folderIds: string[] }[];
   onDeleteBookmark: (id: string) => void;
   onAddKeyword: (id: string, keyword: string) => void; // <-- Add this line
 };
