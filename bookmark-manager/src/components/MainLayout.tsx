@@ -5,20 +5,24 @@ import Registration from "./profile/Registration";
 import Navigation from "./Navigation";
 import BookmarkList from "./BookmarkList";
 import ActionPanel from "./ActionPanel";
+import { FolderType } from "./Folder";
 import { KeywordType, createKeyword} from "./Keyword";
-import Folder from "./Folder";
 import { search } from "./functions/Search";
 import { v4 as uuidv4 } from "uuid";
 
 export default function MainLayout() {
   const [navWidth, setNavWidth] = useState(20); // in percentage, default 20%
   const isResizing = useRef(false);
-  const [bookmarks, setBookmarks] = useState<{ id: string; link: string; description: string; date: string; keywords: KeywordType[], folderIds: string[] }[]>([]);
+
   const [searchQuery, setSearchQuery] = useState("");
   
+  const [bookmarks, setBookmarks] = useState<{ id: string; link: string; description: string; date: string; keywords: KeywordType[], folderIds: string[] }[]>([]);
   const [keywords, setKeywords] = useState<KeywordType[]>([]);
 
+  const [folders, setFolders] = useState<FolderType[]>([{ id: "all", name: "All" }]);
   const [currentFolderId, setCurrentFolderId] = useState("all");
+
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Mouse event handlers for resizing
   const handleMouseDown = () => (isResizing.current = true);
@@ -44,15 +48,36 @@ export default function MainLayout() {
       description: description || "No description",
       date: new Date().toISOString(),
       keywords: keywords, // ✅ Store the selected keywords here
-      folderIds: ["All"],
+      folderIds: currentFolderId === "all" ? ["all"] : ["all", currentFolderId],
     };
     setBookmarks((prev) => [...prev, newBookmark]);
+    console.log("New bookmark created:", newBookmark);
   };
 
   // Handle deleting bookmarks
   const handleDeleteBookmark = (id: string) => {
     setBookmarks((prev) => prev.filter((b) => b.id !== id));
   };
+
+  // Function to handle folder creation
+  const handleAddFolder = (folderName: string) => {
+    const newFolder = { id: uuidv4(), name: folderName };
+    setFolders((prev) => [...prev, newFolder]);
+    setCurrentFolderId(newFolder.id); // Focus on the newly created folder
+    console.log("New folder created:", newFolder);
+  };
+
+  const handleRenameFolder = (id: string, newName: string) => {
+    setFolders(folders.map(folder =>
+      folder.id === id ? { ...folder, name: newName } : folder
+    ));
+  };
+
+  // Handle deleting a folder
+  const handleDeleteFolder = (id: string) => {
+    setFolders(folders.filter(folder => folder.id !== id));
+  };
+
 
   const handleAddKeyword = (bookmarkId: string, keywordText: string) => {
     setBookmarks((prev) =>
@@ -90,7 +115,15 @@ export default function MainLayout() {
         style={{ width: `${navWidth}%` }}
       >
         <Registration />
-        <Navigation chooseFolder={setCurrentFolderId} />
+        <Navigation 
+          folders={folders}
+          onAddFolder={handleAddFolder} // Pass folder creation function
+          onRenameFolder={handleRenameFolder} // Pass renaming function
+          onDeleteFolder={handleDeleteFolder} // Pass deleting function
+          chooseFolder={setCurrentFolderId} 
+          inputRef={inputRef} // Pass ref for auto-focus
+          currentFolderId={currentFolderId}
+        />
       </div>
 
 

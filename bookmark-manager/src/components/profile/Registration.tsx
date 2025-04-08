@@ -35,13 +35,16 @@ const Registration = () => {
 
       {/* Settings Panel */}
       {settingsOpen && (
-        <div className="mt-2 bg-[var(--background)] p-4">
-          <h3 className="font-bold">Settings Options</h3>
-          <button
+        <div className="flex flex-col mt-2 relative border-2 border-[var(--border)] rounded-md shadow-md cursor-pointer">
+          <button className="hover:bg-[--background] border-b-2 border-[var(--border)] p-2"
             onClick={() => toggleDarkMode()}
           >
-          black</button>
+          Dark mode</button>
+          <button className="hover:bg-[--background] p-2"
+          >
+          Register</button>
         </div>
+        
       )}
     </div>
   );

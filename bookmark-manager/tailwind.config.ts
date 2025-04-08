@@ -20,6 +20,7 @@ export default {
         'accent-foreground': 'var(--accent-foreground)',
         input: 'var(--input-field)',
         border: 'var(--border)',
+        primaryhigh: 'var(--primary-high)'
       },
     },
   },

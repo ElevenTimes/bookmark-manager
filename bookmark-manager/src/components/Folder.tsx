@@ -9,9 +9,10 @@ type FolderProps = FolderType & {
   onDelete: (id: string) => void;
   onRename: (id: string, newName: string) => void;
   onSelect: (id: string) => void; // <-- Added
+  isSelected: boolean;
 };
 
-const Folder = ({ id, name, onDelete, onRename, onSelect }: FolderProps) => {
+const Folder = ({ id, name, onDelete, onRename, onSelect, isSelected }: FolderProps) => {
   const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState(name);
   const [showMenu, setShowMenu] = useState(false);
@@ -60,7 +61,11 @@ const Folder = ({ id, name, onDelete, onRename, onSelect }: FolderProps) => {
           onContextMenu={handleRightClick}
           onDoubleClick={startRenaming}
           onClick={() => onSelect(id)} // <-- Call chooseFolder
-          className="w-full text-left p-2 bg-[var(--primary)] text-[var(--secondary-foreground)] rounded hover:bg-[var(--border)] mb-2"
+          className={`w-full text-left p-2 rounded mb-2 ${
+            isSelected
+              ? "bg-[var(--primary)] text-[var(--secondary-foreground)]"
+              : "bg-[var(--primary-high)] text-[var(--secondary-foreground)]"
+          }`}
         >
           {name}
         </button>
@@ -68,7 +73,12 @@ const Folder = ({ id, name, onDelete, onRename, onSelect }: FolderProps) => {
 
       {/* Context menu */}
       {showMenu && id != "all" && (
-        <div className="absolute top-8 right-0 bg-[var(--primary)] shadow-md rounded-md p-2 z-10">
+        <div className={`absolute top-8 right-0 shadow-md rounded-md p-2 z-10 ${
+            isSelected
+              ? "bg-[var(--primary)] text-[var(--secondary-foreground)]"
+              : "bg-[var(--primary-high)] text-[var(--secondary-foreground)]"
+          }`}
+          >
           <button
             onClick={() => onDelete(id)}
             className="text-[var(--secondary-foreground)]"

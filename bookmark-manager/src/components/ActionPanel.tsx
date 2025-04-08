@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { BookmarkType } from "./Bookmark"; // Adjust path if needed
 import { sort } from "./functions/Sort";
 import { KeywordType, createKeyword } from "./Keyword";

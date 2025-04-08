@@ -1,20 +1,25 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { FolderPlus } from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
 import Folder from "./Folder";
 
-export default function Navigation({ chooseFolder }: { chooseFolder: (id: string) => void }) {
-  const [folders, setFolders] = useState<{ id: string; name: string }[]>([
-    { id: "all", name: "All" }, // Default "All" folder
-  ]);
-
+export default function Navigation({ folders, onAddFolder, onRenameFolder, onDeleteFolder, chooseFolder, inputRef, currentFolderId,}: { 
+  folders: { id: string; name: string }[];
+  onAddFolder: (folderName: string) => void;
+  onRenameFolder: (id: string, newName: string) => void;
+  onDeleteFolder: (id: string) => void;
+  chooseFolder: (id: string) => void;
+  inputRef: React.RefObject<HTMLInputElement>;
+  currentFolderId: string;
+}) {
   const [newFolderName, setNewFolderName] = useState("");
   const [creatingFolder, setCreatingFolder] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+
+  const [selectedFolderId, setSelectedFolderId] = useState(currentFolderId);
 
   const handleChooseFolder = (id: string) => {
+    setSelectedFolderId(id);
     chooseFolder(id);
   };
 
@@ -28,12 +33,9 @@ export default function Navigation({ chooseFolder }: { chooseFolder: (id: string
   // Save folder when Enter is pressed
   function handleSaveFolder() {
     if (newFolderName.trim()) {
-      setFolders([
-        ...folders,
-        { id: uuidv4(), name: newFolderName.trim() },
-      ]);
+      onAddFolder(newFolderName.trim());
     }
-    setCreatingFolder(false); // Close input field
+    setCreatingFolder(false); 
   }
 
   // Handle input blur (clicking outside)
@@ -43,14 +45,12 @@ export default function Navigation({ chooseFolder }: { chooseFolder: (id: string
 
   // Delete Folder
   function handleDeleteFolder(id: string) {
-    setFolders(folders.filter(folder => folder.id !== id));
+    onDeleteFolder(id);
   }
 
   // Rename Folder
   function handleRenameFolder(id: string, newName: string) {
-    setFolders(folders.map(folder =>
-      folder.id === id ? { ...folder, name: newName } : folder
-    ));
+    onRenameFolder(id, newName);
   }
 
   return (
@@ -73,6 +73,7 @@ export default function Navigation({ chooseFolder }: { chooseFolder: (id: string
               onDelete={handleDeleteFolder}
               onRename={handleRenameFolder}
               onSelect={handleChooseFolder}
+              isSelected={selectedFolderId === folder.id}
             />
           </li>
         ))}
@@ -95,4 +96,6 @@ export default function Navigation({ chooseFolder }: { chooseFolder: (id: string
     </div>
   );
 }
+
+
 
