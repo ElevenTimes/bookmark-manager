@@ -73,6 +73,7 @@ export default function MainLayout() {
   // Handle adding bookmarks
   const handleAddBookmark = async (link: string, description: string, keywords: KeywordType[]) => {
     const newBookmark = {
+      id: uuidv4(), // ✅ Re-add this
       link,
       description: description || "No description",
       date: new Date().toISOString(),
