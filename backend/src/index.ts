@@ -5,12 +5,13 @@ import bookmarksRouter from './routes/bookmarks';
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:3000' // Replace with your frontend's origin if different
+  origin: ['http://frontend:3000', 'http://localhost:3000'], // Allow both local and Docker-originated requests
 }));
 
 app.use(express.json());
 
-app.use('/api/bookmarks', bookmarksRouter);
+// Use the bookmarks router for the /api/bookmark path
+app.use('/api/bookmark', bookmarksRouter); // Here is where you should mount your router
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {

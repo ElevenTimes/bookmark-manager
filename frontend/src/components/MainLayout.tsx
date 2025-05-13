@@ -47,7 +47,7 @@ export default function MainLayout() {
   useEffect(() => {
     const fetchBookmarks = async () => {
       try {
-        const response = await fetch('/api/bookmarks');
+        const response = await fetch('/api/bookmark');
         const data = await response.json();
 
         // Debug the structure
@@ -71,18 +71,40 @@ export default function MainLayout() {
 
   
   // Handle adding bookmarks
-  const handleAddBookmark = (link: string, description: string, keywords: KeywordType[]) => {
+  const handleAddBookmark = async (link: string, description: string, keywords: KeywordType[]) => {
     const newBookmark = {
-      id: uuidv4(),
       link,
       description: description || "No description",
       date: new Date().toISOString(),
-      keywords: keywords, // ✅ Store the selected keywords here
+      keywords: keywords,
       folderIds: currentFolderId === "all" ? ["all"] : ["all", currentFolderId],
     };
-    setBookmarks((prev) => [...prev, newBookmark]);
-    console.log("New bookmark created:", newBookmark);
+
+    // Send the new bookmark to the backend API
+    try {
+      const response = await fetch('/api/bookmark', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newBookmark),
+      });
+
+      if (response.ok) {
+        const addedBookmark = await response.json();
+        console.log("New bookmark added:", addedBookmark);
+
+        // Update local state with the newly added bookmark
+        setBookmarks((prev) => [...prev, addedBookmark]);
+      } else {
+        console.error("Failed to add bookmark:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error adding bookmark:", error);
+    }
   };
+
+
 
   // Handle deleting bookmarks
   const handleDeleteBookmark = (id: string) => {
