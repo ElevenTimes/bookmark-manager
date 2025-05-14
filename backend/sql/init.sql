@@ -1,3 +1,10 @@
+DROP TABLE IF EXISTS bookmark_keyword;
+DROP TABLE IF EXISTS bookmark_folder;
+DROP TABLE IF EXISTS bookmark;
+DROP TABLE IF EXISTS folder;
+DROP TABLE IF EXISTS keyword;
+
+
 CREATE TABLE bookmarkList (
   listId CHAR(36) PRIMARY KEY
 );
@@ -9,7 +16,6 @@ CREATE TABLE users (
   bookmarkListId CHAR(36),
   FOREIGN KEY (bookmarkListId) REFERENCES bookmarkList(listId) ON DELETE CASCADE
 );
-
 
 CREATE TABLE bookmark (
   id CHAR(36) PRIMARY KEY,
@@ -51,3 +57,6 @@ CREATE TABLE bookmark_folder (
 CREATE INDEX idx_user_list ON users(bookmarkListId);
 CREATE INDEX idx_bookmark_list ON bookmark(bookmarkListId);
 CREATE INDEX idx_folder_list ON folder(bookmarkListId);
+
+INSERT INTO folder (id, name) VALUES ('all', 'All')
+ON DUPLICATE KEY UPDATE name = 'All';

@@ -1,51 +1,100 @@
 import express from 'express';
-import pool from '../db';  // Assuming 'pool' is your db connection object
+import pool from '../db';
 
 const router = express.Router();
 
-// Function to get bookmarks from the database
-const getBookmarks = async () => {
+export const getBookmarks = async () => {
   try {
     console.log('Fetched');
-    const [rows] = await pool.execute('SELECT * FROM bookmark');
-    return rows;
+
+    const [bookmarks]: [any[], any] = await pool.execute('SELECT * FROM bookmark');
+
+    const [bookmarkKeywords]: [any[], any] = await pool.execute(`
+      SELECT bk.bookmarkId, k.id AS keywordId, k.name
+      FROM bookmark_keyword bk
+      JOIN keyword k ON bk.keywordId = k.id
+    `);
+
+    const [bookmarkFolders]: [any[], any] = await pool.execute(`
+      SELECT bookmarkId, folderId
+      FROM bookmark_folder
+    `);
+
+    const bookmarkMap = bookmarks.map((b: any) => {
+      const keywords = bookmarkKeywords
+        .filter((kw: any) => kw.bookmarkId === b.id)
+        .map((kw: any) => ({
+          id: kw.keywordId,
+          name: kw.name,
+        }));
+
+      const folderIds = bookmarkFolders
+        .filter((f: any) => f.bookmarkId === b.id)
+        .map((f: any) => f.folderId);
+
+      return {
+        id: b.id,
+        link: b.link,
+        description: b.description,
+        date: b.date,
+        keywords,
+        folderIds,
+      };
+    });
+
+    return bookmarkMap;
   } catch (error) {
     console.error('❌ Error fetching bookmarks from DB:', error);
     throw error;
   }
 };
 
-// Function to add a bookmark to the database
+
 const addBookmark = async (bookmark: any) => {
   const { id, link, description, date, keywords, folderIds } = bookmark;
-
   const formattedDate = new Date(date).toISOString().slice(0, 19).replace('T', ' ');
 
   console.log('📥 Received bookmark to add:', bookmark);
 
+  const connection = await pool.getConnection();
+  await connection.beginTransaction();
+
   try {
     console.log('📌 Inserting into bookmark table...');
-    const [result] = await pool.execute(
+    await connection.execute(
       'INSERT INTO bookmark (id, link, description, date) VALUES (?, ?, ?, ?)', 
       [id, link, description, formattedDate]
     );
 
-    const insertId = (result as any).insertId;
-    console.log('✅ Insert successful. insertId:', insertId);
+    // Insert folder relationships (including "all")
+    for (const folderId of folderIds) {
+      await connection.execute(
+        'INSERT INTO bookmark_folder (bookmarkId, folderId) VALUES (?, ?)',
+        [id, folderId]
+      );
+    }
 
-    // Log keyword and folder relationships
-    console.log('🔑 Keywords:', keywords);
-    console.log('📁 Folder IDs:', folderIds);
+    // Insert keyword relationships (optional)
+    for (const keyword of keywords) {
+      await connection.execute(
+        'INSERT INTO bookmark_keyword (bookmarkId, keywordId) VALUES (?, ?)',
+        [id, keyword.id]
+      );
+    }
 
-    // Example: Log where you would insert to junction tables
-    // console.log('⏳ Inserting into bookmark_keyword and bookmark_folder...');
+    await connection.commit();
+    console.log('✅ All insertions successful.');
 
     return { id, link, description, formattedDate, keywords, folderIds };
   } catch (error) {
+    await connection.rollback();
     console.error('❌ Error adding bookmark to DB:', error);
     throw error;
+  } finally {
+    connection.release();
   }
 };
+
 
 router.get('/', async (req, res) => {
   try {
@@ -56,7 +105,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// New POST endpoint to add a bookmark
 router.post('/', async (req, res) => {
   console.log('📨 POST /api/bookmark called');
   console.log('📦 Request body:', req.body);
@@ -64,7 +112,6 @@ router.post('/', async (req, res) => {
   try {
     const newBookmark = req.body;
     const addedBookmark = await addBookmark(newBookmark);
-    console.log('✅ Bookmark added successfully:', addedBookmark);
     res.status(201).json(addedBookmark);
   } catch (error) {
     console.error('❌ Failed to add bookmark:', error);
@@ -73,6 +120,7 @@ router.post('/', async (req, res) => {
 });
 
 export default router;
+
 
 
 

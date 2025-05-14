@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import bookmarksRouter from './routes/bookmarks';
+import keywordRoutes from './routes/keywords';
 
 const app = express();
 
@@ -11,7 +12,8 @@ app.use(cors({
 app.use(express.json());
 
 // Use the bookmarks router for the /api/bookmark path
-app.use('/api/bookmark', bookmarksRouter); // Here is where you should mount your router
+app.use('/api/bookmark', bookmarksRouter);
+app.use('/api/keyword', keywordRoutes);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {

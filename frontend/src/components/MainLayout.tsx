@@ -51,7 +51,7 @@ export default function MainLayout() {
         const data = await response.json();
 
         // Debug the structure
-        console.log("Fetched bookmarks:", data);
+        console.log("Fetched bookmarks:", data.length, data);
 
         // Ensure it's an array before setting
         if (Array.isArray(data)) {
@@ -67,7 +67,32 @@ export default function MainLayout() {
     };
 
     fetchBookmarks();
-  }, []);
+    }, []);
+
+      useEffect(() => {
+      const fetchBookmarks = async () => {
+        try {
+          const response = await fetch('/api/bookmark');
+          const data = await response.json();
+
+          // Debug the structure
+          console.log("Fetched bookmarks:", data.length, data);
+
+          // Ensure it's an array before setting
+          if (Array.isArray(data)) {
+            setBookmarks(data);
+          } else {
+            console.error("Unexpected response format for bookmarks:", data);
+            setBookmarks([]); // fallback to empty array to avoid crash
+          }
+        } catch (error) {
+          console.error("Error fetching bookmarks:", error);
+          setBookmarks([]); // also fallback on error
+        }
+      };
+
+      fetchBookmarks();
+    }, []);
 
   
   // Handle adding bookmarks
@@ -153,7 +178,7 @@ export default function MainLayout() {
   };
 
 
-  const handleAddKeyword = (bookmarkId: string, keywordText: string) => {
+  const handleAddKeyword = async (bookmarkId: string, keywordText: string) => {
     setBookmarks((prev) =>
       prev.map((bookmark) =>
         bookmark.id === bookmarkId
@@ -166,12 +191,24 @@ export default function MainLayout() {
           : bookmark
       )
     );
-  
-    // Optional: Ensure global keyword list is updated
+
+    // If it's a new global keyword, add it to the list and send to backend
     if (!keywords.some((kw) => kw.keyword === keywordText)) {
-      setKeywords((prev) => [...prev, createKeyword(keywordText)]);
+      const newKeyword = createKeyword(keywordText);
+      setKeywords((prev) => [...prev, newKeyword]);
+
+      try {
+        await fetch('/api/keyword', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newKeyword),
+        });
+      } catch (error) {
+        console.error('❌ Failed to save new keyword to backend:', error);
+      }
     }
   };
+
   
   // Filter bookmarks based on current folder + search query
   const filteredBookmarks = search(
