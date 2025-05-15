@@ -1,0 +1,56 @@
+
+# Docker & Docker Compose Commands for Server Management
+
+# Build and start all containers in the background (detached)
+docker-compose up --build -d
+
+# Start all containers without rebuilding (detached)
+docker-compose up -d
+
+# Start all containers in the foreground (logs show in terminal)
+docker-compose up
+
+# Stop all running containers
+docker-compose down
+
+# Stop and remove all containers, networks, and volumes defined in docker-compose.yml
+docker-compose down -v
+
+# Show running containers
+docker ps
+
+# Show all containers (running + stopped)
+docker ps -a
+
+# Remove stopped containers
+docker container prune
+
+# Remove all unused images
+docker image prune -a
+
+# Remove all unused volumes
+docker volume prune
+
+# Remove all unused networks
+docker network prune
+
+# Remove all unused Docker objects (containers, images, volumes, networks)
+docker system prune -a --volumes
+
+# View logs of a specific service (replace SERVICE_NAME)
+docker-compose logs SERVICE_NAME
+
+# Follow logs in real time
+docker-compose logs -f SERVICE_NAME
+
+# Execute a command inside a running container (replace CONTAINER_NAME/ID)
+docker exec -it CONTAINER_NAME /bin/sh
+
+# View Docker disk usage
+docker system df
+
+# Rebuild images without cache
+docker-compose build --no-cache
+
+# Restart a specific service (replace SERVICE_NAME)
+docker-compose restart SERVICE_NAME
