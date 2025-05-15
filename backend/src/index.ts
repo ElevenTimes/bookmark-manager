@@ -1,7 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import bookmarksRouter from './routes/bookmarks';
-import keywordRoutes from './routes/keywords';
+import keywordRouter from './routes/keywords';
+import folderRouter from './routes/folders';
+import bookmarkKeywordsRouter from './routes/bookmarkKeywords';
+import bookmarkFoldersRouter from './routes/bookmarkFolders';
 
 const app = express();
 
@@ -13,7 +16,10 @@ app.use(express.json());
 
 // Use the bookmarks router for the /api/bookmark path
 app.use('/api/bookmark', bookmarksRouter);
-app.use('/api/keyword', keywordRoutes);
+app.use('/api/keyword', keywordRouter);
+app.use('/api/folder', folderRouter);
+app.use('/api/bookmark/keyword', bookmarkKeywordsRouter);
+app.use('/api/bookmark/folder', bookmarkFoldersRouter);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {

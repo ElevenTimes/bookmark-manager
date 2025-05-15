@@ -17,14 +17,12 @@ export type BookmarkType = {
 
 type BookmarkProps = BookmarkType & {
   onDelete: (id: string) => void;
-  onAddKeyword: (id: string, keyword: string) => void;
   onRename: (id: string, newLink: string, newDescription: string) => void;
   allKeywords: KeywordType[];
   onToggleKeyword: (bookmarkId: string, keyword: KeywordType, add: boolean) => void;
 };
 
-const Bookmark = ({ id, link, description, keywords, folderIds, onDelete, onAddKeyword, onRename, allKeywords, onToggleKeyword }: BookmarkProps) => {
-
+const Bookmark = ({ id, link, description, keywords, folderIds, onDelete, onRename, allKeywords, onToggleKeyword }: BookmarkProps) => {
 
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
@@ -57,6 +55,7 @@ const Bookmark = ({ id, link, description, keywords, folderIds, onDelete, onAddK
 
   return (
     <div
+      id={`bookmark-${id}`}
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData("bookmarkId", id);
@@ -128,14 +127,16 @@ const Bookmark = ({ id, link, description, keywords, folderIds, onDelete, onAddK
     {/* Keywords */}
     <div className="mt-2">
       <div className="flex flex-wrap gap-1">
-        {keywords.map((keyword) => (
-          <span
-            key={keyword.id}
-            className="bg-[var(--primary)] text-[var(--primary-foreground)] text-sm px-2 py-1 rounded max-w-32 break-words text-center"
-          >
-            {keyword.keyword}
-          </span>
-        ))}
+        {keywords.map((keyword) => {
+          return (
+            <span
+              key={keyword.id}
+              className="bg-[var(--primary)] text-[var(--primary-foreground)] text-sm px-2 py-1 rounded max-w-32 break-words text-center whitespace-normal min-w-10"
+            >
+              {keyword.keyword || keyword.name}
+            </span>
+          );
+        })}
         <button
           onClick={() => setIsEditingKeywords((prev) => !prev)}
           title="Edit Keywords"

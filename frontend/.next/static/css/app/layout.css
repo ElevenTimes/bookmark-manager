@@ -644,6 +644,9 @@ video {
 .w-full {
   width: 100%;
 }
+.min-w-10 {
+  min-width: 2.5rem;
+}
 .max-w-32 {
   max-width: 8rem;
 }
@@ -713,6 +716,9 @@ video {
 }
 .overflow-hidden {
   overflow: hidden;
+}
+.whitespace-normal {
+  white-space: normal;
 }
 .break-words {
   overflow-wrap: break-word;

@@ -14,9 +14,9 @@ type ActionPanelProps = {
   setBookmarks: React.Dispatch<React.SetStateAction<BookmarkType[]>>;
   setSearchQuery: (query: string) => void;
   keywords: KeywordType[];
-  setKeywords: React.Dispatch<React.SetStateAction<KeywordType[]>>;
   searchSelectedKeywords: KeywordType[];
   setSearchSelectedKeywords: React.Dispatch<React.SetStateAction<KeywordType[]>>;
+  handleCreateKeyword: (keywordText: string) => void;
 };
 
 export default function ActionPanel({
@@ -25,9 +25,9 @@ export default function ActionPanel({
   setBookmarks,
   setSearchQuery,
   keywords,
-  setKeywords,
   searchSelectedKeywords,
   setSearchSelectedKeywords,
+  handleCreateKeyword,
 }: ActionPanelProps) {
   const [isSorting, setIsSorting] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
@@ -65,13 +65,11 @@ export default function ActionPanel({
     setIsAdding(false);
   };
 
-  const handleCreateKeyword = () => {
+  const handleCreateKeywordClick = () => {
     if (!newKeyword.trim()) return;
-    const keyword = createKeyword(newKeyword);
-    setKeywords((prev) => [...prev, keyword]);
+    handleCreateKeyword(newKeyword); // 👈 call prop instead
     setNewKeyword("");
   };
-
   const toggleSearchKeyword = (keyword: KeywordType) => {
     setSearchSelectedKeywords((prev) =>
       prev.some((kw) => kw.id === keyword.id)
@@ -148,7 +146,7 @@ export default function ActionPanel({
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    handleCreateKeyword();
+                    handleCreateKeywordClick();
                   }}
                   className="flex flex-col gap-2"
                 >

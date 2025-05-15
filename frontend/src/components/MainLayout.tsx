@@ -45,56 +45,47 @@ export default function MainLayout() {
   }
 
   useEffect(() => {
-    const fetchBookmarks = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('/api/bookmark');
-        const data = await response.json();
+        const [bookmarkRes, keywordRes, folderRes] = await Promise.all([
+          fetch('/api/bookmark'),
+          fetch('/api/keyword'),
+          fetch('/api/folder'),
+        ]);
 
-        // Debug the structure
-        console.log("Fetched bookmarks:", data.length, data);
+        const [bookmarkData, keywordData, folderData] = await Promise.all([
+          bookmarkRes.json(),
+          keywordRes.json(),
+          folderRes.json(),
+        ]);
 
-        // Ensure it's an array before setting
-        if (Array.isArray(data)) {
-          setBookmarks(data);
-        } else {
-          console.error("Unexpected response format for bookmarks:", data);
-          setBookmarks([]); // fallback to empty array to avoid crash
+        if (
+          !Array.isArray(bookmarkData) ||
+          !Array.isArray(keywordData) ||
+          !Array.isArray(folderData)
+        ) {
+          console.error("Unexpected data format");
+          setBookmarks([]);
+          setKeywords([]);
+          setFolders([]);
+          return;
         }
-      } catch (error) {
-        console.error("Error fetching bookmarks:", error);
-        setBookmarks([]); // also fallback on error
+
+        setBookmarks(bookmarkData);
+        setKeywords(keywordData);
+        setFolders(folderData);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setBookmarks([]);
+        setKeywords([]);
+        setFolders([]);
       }
     };
 
-    fetchBookmarks();
-    }, []);
+    fetchData();
+  }, []);
 
-      useEffect(() => {
-      const fetchBookmarks = async () => {
-        try {
-          const response = await fetch('/api/bookmark');
-          const data = await response.json();
 
-          // Debug the structure
-          console.log("Fetched bookmarks:", data.length, data);
-
-          // Ensure it's an array before setting
-          if (Array.isArray(data)) {
-            setBookmarks(data);
-          } else {
-            console.error("Unexpected response format for bookmarks:", data);
-            setBookmarks([]); // fallback to empty array to avoid crash
-          }
-        } catch (error) {
-          console.error("Error fetching bookmarks:", error);
-          setBookmarks([]); // also fallback on error
-        }
-      };
-
-      fetchBookmarks();
-    }, []);
-
-  
   // Handle adding bookmarks
   const handleAddBookmark = async (link: string, description: string, keywords: KeywordType[]) => {
     const newBookmark = {
@@ -144,27 +135,63 @@ export default function MainLayout() {
     );
   };
 
-  const moveBookmarkToFolder = (bookmarkId: string, targetFolderId: string) => {
-    setBookmarks((prev) =>
-      prev.map((b) =>
-        b.id === bookmarkId
-          ? {
-              ...b,
-              folderIds: ["all", targetFolderId],
-            }
-          : b
-      )
-    );
-  };
+const moveBookmarkToFolder = async (bookmarkId: string, targetFolderId: string) => {
+  // Optimistically update UI
+  setBookmarks((prev) =>
+    prev.map((b) =>
+      b.id === bookmarkId
+        ? { ...b, folderIds: ['all', targetFolderId] }
+        : b
+    )
+  );
+
+  // Send update to backend
+  try {
+    const res = await fetch('/api/bookmark/folder', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bookmarkId,
+        folderId: targetFolderId,
+      }),
+    });
+
+    if (!res.ok) {
+      console.error('❌ Failed to update folder in DB');
+      // Optionally: roll back UI update here
+    } else {
+      console.log('✅ Bookmark folder updated in DB');
+    }
+  } catch (err) {
+    console.error('❌ Error updating folder in DB:', err);
+    // Optionally: roll back UI update here
+  }
+};
+
   
 
   // Function to handle folder creation
-  const handleAddFolder = (folderName: string) => {
+  const handleAddFolder = async (folderName: string) => {
     const newFolder = { id: uuidv4(), name: folderName };
-    setFolders((prev) => [...prev, newFolder]);
-    setCurrentFolderId(newFolder.id); // Focus on the newly created folder
-    console.log("New folder created:", newFolder);
+    try {
+      const res = await fetch('/api/folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newFolder),
+      });
+
+      if (res.ok) {
+        setFolders((prev) => [...prev, newFolder]);
+        setCurrentFolderId(newFolder.id);
+        console.log("✅ Folder saved:", newFolder);
+      } else {
+        console.error("❌ Failed to save folder");
+      }
+    } catch (err) {
+      console.error("❌ Error saving folder:", err);
+    }
   };
+
 
   const handleRenameFolder = (id: string, newName: string) => {
     setFolders(folders.map(folder =>
@@ -177,37 +204,34 @@ export default function MainLayout() {
     setFolders(folders.filter(folder => folder.id !== id));
   };
 
+  const handleCreateKeyword = async (keywordText: string) => {
+    if (!keywordText.trim()) return;
 
-  const handleAddKeyword = async (bookmarkId: string, keywordText: string) => {
-    setBookmarks((prev) =>
-      prev.map((bookmark) =>
-        bookmark.id === bookmarkId
-          ? {
-              ...bookmark,
-              keywords: bookmark.keywords.some((kw) => kw.keyword === keywordText)
-                ? bookmark.keywords.filter((kw) => kw.keyword !== keywordText) // Toggle off
-                : [...bookmark.keywords, createKeyword(keywordText)], // Toggle on
-            }
-          : bookmark
-      )
-    );
+    const existing = keywords.find((kw) => kw.keyword === keywordText);
+    if (existing) return;
 
-    // If it's a new global keyword, add it to the list and send to backend
-    if (!keywords.some((kw) => kw.keyword === keywordText)) {
-      const newKeyword = createKeyword(keywordText);
-      setKeywords((prev) => [...prev, newKeyword]);
+    const newKeyword = createKeyword(keywordText);
 
-      try {
-        await fetch('/api/keyword', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newKeyword),
-        });
-      } catch (error) {
-        console.error('❌ Failed to save new keyword to backend:', error);
+    try {
+      const response = await fetch('/api/keyword', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newKeyword),
+      });
+
+      if (response.ok) {
+        const addedKeyword = await response.json();
+        setKeywords((prev) => [...prev, addedKeyword]);
+        console.log("✅ Keyword created:", addedKeyword);
+      } else {
+        console.error("❌ Failed to create keyword:", response.statusText);
       }
+    } catch (error) {
+      console.error("❌ Error creating keyword:", error);
     }
   };
+
+
 
   
   // Filter bookmarks based on current folder + search query
@@ -216,8 +240,6 @@ export default function MainLayout() {
     searchQuery,
     searchSelectedKeywords.map(k => k.keyword) // <--- Pass keyword names
   );
-  
-  
 
   return (
     
@@ -253,24 +275,50 @@ export default function MainLayout() {
             setBookmarks={setBookmarks}
             setSearchQuery={setSearchQuery}
             keywords={keywords} // Pass keywords list here
-            setKeywords={setKeywords} // Pass setKeywords function here
             searchSelectedKeywords={searchSelectedKeywords}
             setSearchSelectedKeywords={setSearchSelectedKeywords}
+            handleCreateKeyword={handleCreateKeyword}
           />
         </div>
         <BookmarkList 
           bookmarks={filteredBookmarks} 
           onDeleteBookmark={handleDeleteBookmark} 
-          onAddKeyword={handleAddKeyword} // <-- Ensure this is passed
           onRename={handleRenameBookmark} // <-- Ensure this is passed
           allKeywords={keywords} // Pass the global keywords list
-          onToggleKeyword={(bookmarkId, keyword, add) => {
+          onToggleKeyword={async (bookmarkId, keyword, add) => {
             setBookmarks((prev) =>
               prev.map((b) =>
-                b.id === bookmarkId ? {...b, keywords: add ? [...b.keywords, keyword] : b.keywords.filter((k) => k.id !== keyword.id),} : b
+                b.id === bookmarkId
+                  ? {
+                      ...b,
+                      keywords: add
+                        ? [...b.keywords, keyword]
+                        : b.keywords.filter((k) => k.id !== keyword.id),
+                    }
+                  : b
               )
             );
+
+            try {
+              const response = await fetch(`/api/bookmark/keyword`, {
+                method: add ? 'POST' : 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  bookmarkId,
+                  keywordId: keyword.id,
+                }),
+              });
+
+              if (!response.ok) {
+                console.error(`❌ Failed to ${add ? "add" : "remove"} keyword`, await response.text());
+              } else {
+                console.log(`✅ Keyword ${add ? "added to" : "removed from"} bookmark`);
+              }
+            } catch (error) {
+              console.error("❌ API error while updating bookmark-keyword relation:", error);
+            }
           }}
+
         />
       </div>
     </div>
