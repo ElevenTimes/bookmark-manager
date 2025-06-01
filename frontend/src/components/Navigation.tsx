@@ -19,6 +19,12 @@ export default function Navigation({ folders, onAddFolder, onRenameFolder, onDel
 
   const [selectedFolderId, setSelectedFolderId] = useState(currentFolderId);
 
+  const sortedFolders = [
+    ...folders.filter(folder => folder.id === 'all'),
+    ...folders.filter(folder => folder.id !== 'all'),
+  ];
+
+
   const handleChooseFolder = (id: string) => {
     setSelectedFolderId(id);
     chooseFolder(id);
@@ -66,7 +72,7 @@ export default function Navigation({ folders, onAddFolder, onRenameFolder, onDel
 
       {/* Folder List */}
       <ul className="space-y-1">
-        {folders.map((folder) => (
+        {sortedFolders.map((folder) => (
           <li key={folder.id}>
             <Folder
               id={folder.id}
@@ -80,7 +86,6 @@ export default function Navigation({ folders, onAddFolder, onRenameFolder, onDel
           </li>
         ))}
 
-        {/* Input Field for Creating Folder */}
         {creatingFolder && (
           <li>
             <input
@@ -90,7 +95,7 @@ export default function Navigation({ folders, onAddFolder, onRenameFolder, onDel
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSaveFolder()}
-              onBlur={handleBlur} // Disappear if clicking outside
+              onBlur={handleBlur}
             />
           </li>
         )}

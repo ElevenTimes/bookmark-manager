@@ -95,6 +95,30 @@ const addBookmark = async (bookmark: any) => {
   }
 };
 
+router.delete('/:id', async (req, res) => {
+  const id = req.params.id;
+  const connection = await pool.getConnection();
+  await connection.beginTransaction();
+  try {
+    // Delete from junction tables first
+    await connection.execute('DELETE FROM bookmark_keyword WHERE bookmarkId = ?', [id]);
+    await connection.execute('DELETE FROM bookmark_folder WHERE bookmarkId = ?', [id]);
+
+    // Then delete from bookmark table
+    await connection.execute('DELETE FROM bookmark WHERE id = ?', [id]);
+
+    await connection.commit();
+    res.status(200).json({ message: 'Bookmark deleted successfully' });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error deleting bookmark:', error);
+    res.status(500).json({ error: 'Failed to delete bookmark' });
+  } finally {
+    connection.release();
+  }
+});
+
+
 
 router.get('/', async (req, res) => {
   try {

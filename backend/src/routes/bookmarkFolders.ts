@@ -37,18 +37,26 @@ router.delete('/', async (req, res) => {
 });
 
 router.put('/', async (req, res) => {
-  const { bookmarkId, folderId } = req.body;
+  const { bookmarkId, oldFolderId, newFolderId } = req.body;
+  console.log('Updating bookmark folder:', { bookmarkId, oldFolderId, newFolderId });
 
   try {
     await db.query(
-      'UPDATE bookmark_folder SET folderId = ? WHERE bookmarkId = ?',
-      [folderId, bookmarkId]
+      'DELETE FROM bookmark_folder WHERE bookmarkId = ? AND folderId = ?',
+      [bookmarkId, oldFolderId]
     );
+    await db.query(
+      'INSERT INTO bookmark_folder (bookmarkId, folderId) VALUES (?, ?)',
+      [bookmarkId, newFolderId]
+    );
+
     res.status(200).json({ message: 'Bookmark folder updated' });
   } catch (error) {
     console.error('Error updating folder:', error);
     res.status(500).json({ error: 'Database error' });
   }
 });
+
+
 
 export default router;

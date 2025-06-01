@@ -25,6 +25,35 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.delete('/:id', async (req, res) => {
+  const folderId = req.params.id;
+  const connection = await pool.getConnection();
+  await connection.beginTransaction();
+
+  try {
+    // Remove from bookmark_folder join table first
+    await connection.execute('DELETE FROM bookmark_folder WHERE folderId = ?', [folderId]);
+
+    // Then delete the folder itself
+    const [result] = await connection.execute('DELETE FROM folder WHERE id = ?', [folderId]);
+
+    await connection.commit();
+
+    if ((result as any).affectedRows === 0) {
+      res.status(404).json({ error: 'Folder not found' });
+      return;
+    }
+
+    res.status(200).json({ message: 'Folder deleted successfully' });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error deleting folder:', error);
+    res.status(500).json({ error: 'Database error' });
+  } finally {
+    connection.release();
+  }
+});
+
 // Get all folders
 router.get('/', async (_req, res) => {
   try {

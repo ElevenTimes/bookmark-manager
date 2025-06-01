@@ -1,8 +1,11 @@
 DROP TABLE IF EXISTS bookmark_keyword;
 DROP TABLE IF EXISTS bookmark_folder;
+DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS bookmark;
 DROP TABLE IF EXISTS folder;
 DROP TABLE IF EXISTS keyword;
+DROP TABLE IF EXISTS bookmarkList;
+
 
 
 CREATE TABLE bookmarkList (

@@ -617,9 +617,6 @@ video {
 .flex {
   display: flex;
 }
-.h-40 {
-  height: 10rem;
-}
 .h-auto {
   height: auto;
 }
@@ -637,6 +634,9 @@ video {
 }
 .w-40 {
   width: 10rem;
+}
+.w-64 {
+  width: 16rem;
 }
 .w-80 {
   width: 20rem;
@@ -809,8 +809,8 @@ video {
 .pr-2 {
   padding-right: 0.5rem;
 }
-.pt-12 {
-  padding-top: 3rem;
+.pt-6 {
+  padding-top: 1.5rem;
 }
 .text-left {
   text-align: left;

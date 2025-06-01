@@ -124,8 +124,20 @@ export default function MainLayout() {
 
 
   // Handle deleting bookmarks
-  const handleDeleteBookmark = (id: string) => {
-    setBookmarks((prev) => prev.filter((b) => b.id !== id));
+  const handleDeleteBookmark = async (id: string) => {
+    try {
+      const res = await fetch(`/api/bookmark/${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setBookmarks((prev) => prev.filter((b) => b.id !== id));
+        console.log('Bookmark deleted successfully');
+      } else {
+        console.error('Failed to delete bookmark:', await res.text());
+      }
+    } catch (error) {
+      console.error('Error deleting bookmark:', error);
+    }
   };
 
   const handleRenameBookmark = (id: string, newLink: string, newDescription: string) => {
@@ -135,38 +147,46 @@ export default function MainLayout() {
     );
   };
 
-const moveBookmarkToFolder = async (bookmarkId: string, targetFolderId: string) => {
-  // Optimistically update UI
-  setBookmarks((prev) =>
-    prev.map((b) =>
-      b.id === bookmarkId
-        ? { ...b, folderIds: ['all', targetFolderId] }
-        : b
-    )
-  );
+  const moveBookmarkToFolder = async (bookmarkId: string, targetFolderId: string) => {
+    // Find the bookmark to get its current folderIds (excluding 'all')
+    const bookmark = bookmarks.find(b => b.id === bookmarkId);
+    if (!bookmark) return;
 
-  // Send update to backend
-  try {
-    const res = await fetch('/api/bookmark/folder', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        bookmarkId,
-        folderId: targetFolderId,
-      }),
-    });
+    // Determine old folders to remove except 'all'
+    const oldFolderIds = bookmark.folderIds.filter(id => id !== 'all');
 
-    if (!res.ok) {
-      console.error('❌ Failed to update folder in DB');
-      // Optionally: roll back UI update here
-    } else {
+    // Optimistically update UI to have just 'all' and new target folder
+    setBookmarks(prev =>
+      prev.map(b =>
+        b.id === bookmarkId
+          ? { ...b, folderIds: ['all', targetFolderId] }
+          : b
+      )
+    );
+
+    try {
+      // For each old folder (except 'all'), remove link
+      for (const oldFolderId of oldFolderIds) {
+        await fetch('/api/bookmark/folder', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookmarkId, folderId: oldFolderId }),
+        });
+      }
+
+      // Add new folder link
+      await fetch('/api/bookmark/folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookmarkId, folderId: targetFolderId }),
+      });
+
       console.log('✅ Bookmark folder updated in DB');
+    } catch (err) {
+      console.error('❌ Error updating folder in DB:', err);
     }
-  } catch (err) {
-    console.error('❌ Error updating folder in DB:', err);
-    // Optionally: roll back UI update here
-  }
-};
+  };
+
 
   
 
@@ -200,10 +220,23 @@ const moveBookmarkToFolder = async (bookmarkId: string, targetFolderId: string) 
   };
 
   // Handle deleting a folder
-  const handleDeleteFolder = (id: string) => {
-    setFolders(folders.filter(folder => folder.id !== id));
-  };
+  const handleDeleteFolder = async (id: string) => {
+    try {
+      const res = await fetch(`/api/folder/${id}`, {
+        method: 'DELETE',
+      });
 
+      if (!res.ok) {
+        console.error('Failed to delete folder:', await res.text());
+        return;
+      }
+
+      setFolders((prev) => prev.filter((folder) => folder.id !== id));
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+    }
+  };
+  
   const handleCreateKeyword = async (keywordText: string) => {
     if (!keywordText.trim()) return;
 
