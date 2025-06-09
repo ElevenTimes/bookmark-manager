@@ -140,12 +140,35 @@ export default function MainLayout() {
     }
   };
 
-  const handleRenameBookmark = (id: string, newLink: string, newDescription: string) => {
-    setBookmarks((prev) => 
-      prev.map((b) =>
-        b.id === id ? { ...b, link: newLink, description: newDescription } : b)
-    );
+  const handleRenameBookmark = async (id: string, newLink: string, newDescription: string) => {
+    try {
+      const res = await fetch(`/api/bookmark/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          link: newLink,
+          description: newDescription,
+        }),
+      });
+
+      if (res.ok) {
+        setBookmarks((prev) =>
+          prev.map((b) =>
+            b.id === id ? { ...b, link: newLink, description: newDescription } : b
+          )
+        );
+        console.log('Bookmark renamed successfully');
+      } else {
+        console.error('Failed to rename bookmark:', await res.text());
+      }
+    } catch (error) {
+      console.error('Error renaming bookmark:', error);
+    }
   };
+
+
 
   const moveBookmarkToFolder = async (bookmarkId: string, targetFolderId: string) => {
     // Find the bookmark to get its current folderIds (excluding 'all')
@@ -213,11 +236,29 @@ export default function MainLayout() {
   };
 
 
-  const handleRenameFolder = (id: string, newName: string) => {
-    setFolders(folders.map(folder =>
-      folder.id === id ? { ...folder, name: newName } : folder
-    ));
+  const handleRenameFolder = async (id: string, newName: string) => {
+    try {
+      const res = await fetch(`/api/folder/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: newName }),
+      });
+
+      if (res.ok) {
+        setFolders(folders.map(folder =>
+          folder.id === id ? { ...folder, name: newName } : folder
+        ));
+        console.log('Folder renamed successfully');
+      } else {
+        console.error('Failed to rename folder:', await res.text());
+      }
+    } catch (error) {
+      console.error('Error renaming folder:', error);
+    }
   };
+
 
   // Handle deleting a folder
   const handleDeleteFolder = async (id: string) => {

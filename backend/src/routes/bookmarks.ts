@@ -143,6 +143,31 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.put('/:id', async (req, res) => {
+  const id = req.params.id;
+  const { link, description } = req.body;
+
+  try {
+    const [result] = await pool.execute(
+      'UPDATE bookmark SET link = ?, description = ? WHERE id = ?',
+      [link, description, id]
+    );
+
+    const affectedRows = (result as any).affectedRows;
+
+    if (affectedRows === 0) {
+      res.status(404).json({ error: 'Bookmark not found' });
+      return;
+    }
+
+    res.status(200).json({ message: 'Bookmark updated successfully' });
+  } catch (error) {
+    console.error('Error updating bookmark:', error);
+    res.status(500).json({ error: 'Failed to update bookmark' });
+  }
+});
+
+
 export default router;
 
 

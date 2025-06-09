@@ -70,4 +70,30 @@ router.get('/', async (_req, res) => {
   }
 });
 
+// Rename (update) folder
+router.put('/:id', async (req, res) => {
+  const folderId = req.params.id;
+  const { name } = req.body;
+
+  try {
+    const [result] = await pool.execute(
+      'UPDATE folder SET name = ? WHERE id = ?',
+      [name, folderId]
+    );
+
+    const affectedRows = (result as any).affectedRows;
+
+    if (affectedRows === 0) {
+      res.status(404).json({ error: 'Folder not found' });
+      return;
+    }
+
+    res.status(200).json({ message: 'Folder renamed successfully' });
+  } catch (error) {
+    console.error('Error renaming folder:', error);
+    res.status(500).json({ error: 'Failed to rename folder' });
+  }
+});
+
+
 export default router;
