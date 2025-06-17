@@ -1,0 +1,6 @@
+-- Bookmark Export
+-- Date: 2025-06-12T12:10:44.683Z
+-- Total Records: 2
+
+INSERT INTO bookmark (id, link, description, date, bookmarkListId) VALUES ('77e11b8f-22a2-45ea-9e32-91d3c6992cf1', 'https://www.swedbank.lv/private', 'galvena bankas', '2025-06-11 10:51:45', NULL);
+INSERT INTO bookmark (id, link, description, date, bookmarkListId) VALUES ('829f8ab0-7d02-4d38-ab2e-9d83b3ed8a10', 'https://sportland.lv/product/under_armour_reign_lifter_training_shoes_3023735_602', 'under armour', '2025-06-11 09:24:31', NULL);

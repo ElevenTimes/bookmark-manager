@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Registration from "./profile/Registration";
+import { VIEWS, ViewType } from "./Views";
+import ImportExport from "./ImportExport";
 import Navigation from "./Navigation";
 import BookmarkList from "./BookmarkList";
 import ActionPanel from "./ActionPanel";
@@ -11,7 +13,10 @@ import { search } from "./functions/Search";
 import { v4 as uuidv4 } from "uuid";
 
 export default function MainLayout() {
-  const [navWidth, setNavWidth] = useState(20); // in percentage, default 20%
+
+  const [view, setView] = useState<ViewType>(VIEWS.BOOKMARKS);
+
+  const [navWidth, setNavWidth] = useState(20);
   const isResizing = useRef(false);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,52 +49,56 @@ export default function MainLayout() {
     window.onmouseup = handleMouseUp;
   }
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [bookmarkRes, keywordRes, folderRes] = await Promise.all([
-          fetch('/api/bookmark'),
-          fetch('/api/keyword'),
-          fetch('/api/folder'),
-        ]);
+  // At the top level of MainLayout component
+  const fetchData = useCallback(async () => {
+    try {
+      const [bookmarkRes, keywordRes, folderRes] = await Promise.all([
+        fetch('/api/bookmark'),
+        fetch('/api/keyword'),
+        fetch('/api/folder'),
+      ]);
 
-        const [bookmarkData, keywordData, folderData] = await Promise.all([
-          bookmarkRes.json(),
-          keywordRes.json(),
-          folderRes.json(),
-        ]);
+      const [bookmarkData, keywordData, folderData] = await Promise.all([
+        bookmarkRes.json(),
+        keywordRes.json(),
+        folderRes.json(),
+      ]);
 
-        if (
-          !Array.isArray(bookmarkData) ||
-          !Array.isArray(keywordData) ||
-          !Array.isArray(folderData)
-        ) {
-          console.error("Unexpected data format");
-          setBookmarks([]);
-          setKeywords([]);
-          setFolders([]);
-          return;
-        }
-
-        setBookmarks(bookmarkData);
-        setKeywords(keywordData);
-        setFolders(folderData);
-      } catch (err) {
-        console.error("Error fetching data:", err);
+      if (
+        !Array.isArray(bookmarkData) ||
+        !Array.isArray(keywordData) ||
+        !Array.isArray(folderData)
+      ) {
+        console.error("Unexpected data format");
         setBookmarks([]);
         setKeywords([]);
         setFolders([]);
+        return;
       }
-    };
 
+      setBookmarks(bookmarkData);
+      setKeywords(keywordData);
+      setFolders(folderData);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setBookmarks([]);
+      setKeywords([]);
+      setFolders([]);
+    }
+  }, []);
+
+
+  // useEffect stays the same
+  useEffect(() => {
     fetchData();
   }, []);
+
 
 
   // Handle adding bookmarks
   const handleAddBookmark = async (link: string, description: string, keywords: KeywordType[]) => {
     const newBookmark = {
-      id: uuidv4(), // ✅ Re-add this
+      id: uuidv4(),
       link,
       description: description || "No description",
       date: new Date().toISOString(),
@@ -312,7 +321,7 @@ export default function MainLayout() {
   const filteredBookmarks = search(
     bookmarks.filter((b) => b.folderIds.includes(currentFolderId)),
     searchQuery,
-    searchSelectedKeywords.map(k => k.keyword) // <--- Pass keyword names
+    searchSelectedKeywords.map(k => k.keyword)
   );
 
   return (
@@ -323,14 +332,15 @@ export default function MainLayout() {
         className="bg-[var(--secondary-background)] text-[var(--foreground)] flex flex-col h-full relative z-0 overflow-hidden" 
         style={{ width: `${navWidth}%` }}
       >
-        <Registration />
+        <Registration setView={setView} currentView={view} />
+
         <Navigation 
           folders={folders}
-          onAddFolder={handleAddFolder} // Pass folder creation function
-          onRenameFolder={handleRenameFolder} // Pass renaming function
-          onDeleteFolder={handleDeleteFolder} // Pass deleting function
+          onAddFolder={handleAddFolder} 
+          onRenameFolder={handleRenameFolder}
+          onDeleteFolder={handleDeleteFolder}
           chooseFolder={setCurrentFolderId} 
-          inputRef={inputRef} // Pass ref for auto-focus
+          inputRef={inputRef}
           currentFolderId={currentFolderId}
           moveBookmarkToFolder={moveBookmarkToFolder}
         />
@@ -342,59 +352,69 @@ export default function MainLayout() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col relative z-10">
-        <div className="pb-10">
-          <ActionPanel 
-            onAddBookmark={handleAddBookmark} 
-            bookmarks={bookmarks} 
-            setBookmarks={setBookmarks}
-            setSearchQuery={setSearchQuery}
-            keywords={keywords} // Pass keywords list here
-            searchSelectedKeywords={searchSelectedKeywords}
-            setSearchSelectedKeywords={setSearchSelectedKeywords}
-            handleCreateKeyword={handleCreateKeyword}
-          />
-        </div>
-        <BookmarkList 
-          bookmarks={filteredBookmarks} 
-          onDeleteBookmark={handleDeleteBookmark} 
-          onRename={handleRenameBookmark} // <-- Ensure this is passed
-          allKeywords={keywords} // Pass the global keywords list
-          onToggleKeyword={async (bookmarkId, keyword, add) => {
-            setBookmarks((prev) =>
-              prev.map((b) =>
-                b.id === bookmarkId
-                  ? {
-                      ...b,
-                      keywords: add
-                        ? [...b.keywords, keyword]
-                        : b.keywords.filter((k) => k.id !== keyword.id),
-                    }
-                  : b
-              )
-            );
+        {view === VIEWS.BOOKMARKS && (
+          <>
+            <div className="pb-10">
+              <ActionPanel 
+                onAddBookmark={handleAddBookmark} 
+                bookmarks={bookmarks} 
+                setBookmarks={setBookmarks}
+                setSearchQuery={setSearchQuery}
+                keywords={keywords}
+                searchSelectedKeywords={searchSelectedKeywords}
+                setSearchSelectedKeywords={setSearchSelectedKeywords}
+                handleCreateKeyword={handleCreateKeyword}
+              />
+            </div>
+            <BookmarkList 
+              bookmarks={filteredBookmarks} 
+              onDeleteBookmark={handleDeleteBookmark} 
+              onRename={handleRenameBookmark}
+              allKeywords={keywords}
+              onToggleKeyword={async (bookmarkId, keyword, add) => {
+                setBookmarks((prev) =>
+                  prev.map((b) =>
+                    b.id === bookmarkId
+                      ? {
+                          ...b,
+                          keywords: add
+                            ? [...b.keywords, keyword]
+                            : b.keywords.filter((k) => k.id !== keyword.id),
+                        }
+                      : b
+                  )
+                );
 
-            try {
-              const response = await fetch(`/api/bookmark/keyword`, {
-                method: add ? 'POST' : 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  bookmarkId,
-                  keywordId: keyword.id,
-                }),
-              });
+                try {
+                  const response = await fetch(`/api/bookmark/keyword`, {
+                    method: add ? 'POST' : 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      bookmarkId,
+                      keywordId: keyword.id,
+                    }),
+                  });
 
-              if (!response.ok) {
-                console.error(`❌ Failed to ${add ? "add" : "remove"} keyword`, await response.text());
-              } else {
-                console.log(`✅ Keyword ${add ? "added to" : "removed from"} bookmark`);
-              }
-            } catch (error) {
-              console.error("❌ API error while updating bookmark-keyword relation:", error);
-            }
-          }}
+                  if (!response.ok) {
+                    console.error(`❌ Failed to ${add ? "add" : "remove"} keyword`, await response.text());
+                  } else {
+                    console.log(`✅ Keyword ${add ? "added to" : "removed from"} bookmark`);
+                  }
+                } catch (error) {
+                  console.error("❌ API error while updating bookmark-keyword relation:", error);
+                }
+              }}
+            />
+          </>
+        )}
 
-        />
+        {view === VIEWS.IMPORT_EXPORT && (
+          <div className="p-8">
+            <ImportExport onImportComplete={fetchData} />
+          </div>
+        )}
       </div>
+
     </div>
   );
 }

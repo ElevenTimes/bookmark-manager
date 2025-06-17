@@ -15,7 +15,6 @@ export default function BookmarkList({ bookmarks, onDeleteBookmark, onRename, al
 
   return (
     <div className="p-4 overflow-auto flex-1">
-      <h2 className="text-xl font-bold mb-4">Bookmarks</h2>
       <div className="space-y-2">
         {bookmarks.map((bookmark) => (
           <Bookmark 
